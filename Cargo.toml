@@ -1,12 +1,8 @@
-[lib]
-proc-macro = true
-
 [package]
 name = "auto_compute"
 version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["Antoine Menciere <antoine.menciere@gmail.com>"]
 
 [dependencies]
-#syn = "1.0"
+compute = { path = "compute" }
+compute-macro = { path = "compute-macro" }
