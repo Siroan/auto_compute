@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, Neg, Sub};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -98,6 +98,21 @@ impl Mul<Unknown> for f64 {
     }
 }
 
+impl Div<f64> for Unknown {
+    type Output = (Self, Result<(), String>);
+
+    fn div(self, rhs: f64) -> Self::Output {
+        if rhs == 0. {
+            (self, Err("Division by zero".to_string()))
+        } else {
+            (Self {
+                factor: self.factor.map(|factor| factor / rhs),
+                unknown: self.unknown,
+            }, Ok(()))
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -117,21 +132,25 @@ mod tests {
     fn test_add_unknowns() {
         let setup = Setup::new();
 
+        // (x) + (2x) = 3x
         let unknown1 = Unknown::new(Some((1., setup.rc.clone())));
         let unknown2 = Unknown::new(Some((2., setup.rc.clone())));
         let sum = Unknown::new(Some((3., setup.rc.clone())));
         assert_eq!(unknown1 + unknown2, sum);
 
+        // () + (2x) = 2x
         let unknown1 = Unknown::new(None);
         let unknown2 = Unknown::new(Some((2., setup.rc.clone())));
         let sum = Unknown::new(Some((2., setup.rc.clone())));
         assert_eq!(unknown1 + unknown2, sum);
 
+        // (x) + () = x
         let unknown1 = Unknown::new(Some((1., setup.rc.clone())));
         let unknown2 = Unknown::new(None);
         let sum = Unknown::new(Some((1., setup.rc.clone())));
         assert_eq!(unknown1 + unknown2, sum);
 
+        // () + () = ()
         let unknown1 = Unknown::new(None);
         let unknown2 = Unknown::new(None);
         let sum = Unknown::new(None);
@@ -142,10 +161,12 @@ mod tests {
     fn test_neg_unknowns() {
         let setup = Setup::new();
 
+        // -(x) = -x
         let unknown = Unknown::new(Some((1., setup.rc.clone())));
         let neg = Unknown::new(Some((-1., setup.rc.clone())));
         assert_eq!(-unknown, neg);
 
+        // -() = ()
         let unknown = Unknown::new(None);
         let neg = Unknown::new(None);
         assert_eq!(-unknown, neg);
@@ -155,21 +176,25 @@ mod tests {
     fn test_sub_unknowns() {
         let setup = Setup::new();
 
+        // (x) - (2x) = -x
         let unknown1 = Unknown::new(Some((1., setup.rc.clone())));
         let unknown2 = Unknown::new(Some((2., setup.rc.clone())));
         let sub = Unknown::new(Some((-1., setup.rc.clone())));
         assert_eq!(unknown1 - unknown2, sub);
 
+        // () - (2x) = -2x
         let unknown1 = Unknown::new(None);
         let unknown2 = Unknown::new(Some((2., setup.rc.clone())));
         let sub = Unknown::new(Some((-2., setup.rc.clone())));
         assert_eq!(unknown1 - unknown2, sub);
 
+        // (x) - () = x
         let unknown1 = Unknown::new(Some((1., setup.rc.clone())));
         let unknown2 = Unknown::new(None);
         let sub = Unknown::new(Some((1., setup.rc.clone())));
         assert_eq!(unknown1 - unknown2, sub);
 
+        // () - () = ()
         let unknown1 = Unknown::new(None);
         let unknown2 = Unknown::new(None);
         let sub = Unknown::new(None);
@@ -180,20 +205,53 @@ mod tests {
     fn test_mul_unknowns() {
         let setup = Setup::new();
 
+        // (3) * (2x) = 6x
         let unknown = Unknown::new(Some((2., setup.rc.clone())));
         let factor = 3.;
         let mul = Unknown::new(Some((6., setup.rc.clone())));
         assert_eq!(factor * unknown, mul);
 
+        // (2x) * (3) = 6x
         let unknown = Unknown::new(Some((2., setup.rc.clone())));
         assert_eq!(unknown * factor, mul);
 
+        // (3) * () = ()
         let unknown = Unknown::new(None);
         let factor = 3.;
         let mul = Unknown::new(None);
         assert_eq!(factor * unknown, mul);
 
+        // () * (3) = ()
         let unknown = Unknown::new(None);
         assert_eq!(unknown * factor, mul);
+    }
+
+    #[test]
+    fn test_div_unknowns() {
+        let setup = Setup::new();
+
+        // (4x) / (2) = 2
+        let unknown = Unknown::new(Some((4., setup.rc.clone())));
+        let factor = 2.;
+        let div = Unknown::new(Some((2., setup.rc.clone())));
+        assert_eq!(unknown / factor, (div, Ok(())));
+
+        // () / (3) = ()
+        let unknown = Unknown::new(None);
+        let factor = 3.;
+        let div = Unknown::new(None);
+        assert_eq!(unknown / factor , (div, Ok(())));
+
+        // (4x) / (0) => error
+        let unknown = Unknown::new(Some((4., setup.rc.clone())));
+        let factor = 0.;
+        let div = Unknown::new(Some((4., setup.rc.clone())));
+        assert_eq!(unknown / factor , (div, Err("Division by zero".to_string())));
+
+        // () / (0) => error
+        let unknown = Unknown::new(None);
+        let factor = 0.;
+        let div = Unknown::new(None);
+        assert_eq!(unknown / factor , (div, Err("Division by zero".to_string())));
     }
 }

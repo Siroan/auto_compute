@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, Neg, Sub};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -110,6 +110,24 @@ impl Mul<Element> for f64 {
     }
 }
 
+impl Div for Element {
+    type Output = Self;
+
+    fn div(self, rhs: Element) -> Self {
+        let ax_result = if (rhs.ax.is_some()) {
+            (rhs.ax, Err("Cannot divide by x".to_string()))
+        } else {
+            self.ax / rhs.b
+        };
+
+        Self {
+            ax: ax_result.0,
+            b: if ax_result.1.is_ok() { self.b / rhs.b } else { self.b },
+            error: self.error.and(ax_result.1),
+        }
+    }
+}
+
 impl PartialEq for Element {
     fn eq(&self, other: &Self) -> bool {
         println!("Solve called");
@@ -153,21 +171,25 @@ mod tests {
     fn test_add_elements() {
         let setup = Setup::new();
 
+        // (x + 3) + (2x + 4) = 3x + 7
         let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
         let element2 = Element::new(Some((2., setup.rc.clone())), 4.);
         let sum = Element::new(Some((3., setup.rc.clone())), 7.);
         assert_eq!(element1 + element2, sum);
 
+        // (3) + (2x + 4) = 2x + 7
         let element1 = Element::new(None, 3.);
         let element2 = Element::new(Some((2., setup.rc.clone())), 4.);
         let sum = Element::new(Some((2., setup.rc.clone())), 7.);
         assert_eq!(element1 + element2, sum);
 
+        // (x + 3) + (4) = x + 7
         let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
         let element2 = Element::new(None, 4.);
         let sum = Element::new(Some((1., setup.rc.clone())), 7.);
         assert_eq!(element1 + element2, sum);
 
+        // (3) + (4) = 7
         let element1 = Element::new(None, 3.);
         let element2 = Element::new(None, 4.);
         let sum = Element::new(None, 7.);
@@ -178,10 +200,12 @@ mod tests {
     fn test_neg_elements() {
         let setup = Setup::new();
 
+        // -(x + 3) = -x - 3
         let element = Element::new(Some((1., setup.rc.clone())), 3.);
         let neg = Element::new(Some((-1., setup.rc.clone())), -3.);
         assert_eq!(-element, neg);
 
+        // -(3) = -3
         let element = Element::new(None, 3.);
         let neg = Element::new(None, -3.);
         assert_eq!(-element, neg);
@@ -191,21 +215,25 @@ mod tests {
     fn test_sub_elements() {
         let setup = Setup::new();
 
+        // (x + 3) - (2x + 4) = -x -1
         let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
         let element2 = Element::new(Some((2., setup.rc.clone())), 4.);
         let sub = Element::new(Some((-1., setup.rc.clone())), -1.);
         assert_eq!(element1 - element2, sub);
 
+        // (3) - (2x + 4) = -2x - 1
         let element1 = Element::new(None, 3.);
         let element2 = Element::new(Some((2., setup.rc.clone())), 4.);
         let sub = Element::new(Some((-2., setup.rc.clone())), -1.);
         assert_eq!(element1 - element2, sub);
 
+        // (x + 3) - (4) = x - 1
         let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
         let element2 = Element::new(None, 4.);
         let sub = Element::new(Some((1., setup.rc.clone())), -1.);
         assert_eq!(element1 - element2, sub);
 
+        // (3) - (4) = -1
         let element1 = Element::new(None, 3.);
         let element2 = Element::new(None, 4.);
         let sub = Element::new(None, -1.);
@@ -216,25 +244,55 @@ mod tests {
     fn test_mul_elements() {
         let setup = Setup::new();
 
-        /*let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
+        // (x + 3) * (2x + 4) => error
+        let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
         let element2 = Element::new(Some((2., setup.rc.clone())), 4.);
-        let mul = Element::new(Some((2., setup.rc.clone())), 4.);
-        assert_eq!(element1 * element2, mul);*/
+        assert_eq!((element1 * element2).error, Err("Square detected".to_string()));
 
+        // (3) * (2x + 4) = 6x + 12
         let element1 = Element::new(None, 3.);
         let element2 = Element::new(Some((2., setup.rc.clone())), 4.);
         let mul = Element::new(Some((6., setup.rc.clone())), 12.);
         assert_eq!(element1 * element2, mul);
 
+        // (2x + 3) * (4) = 8x + 12
         let element1 = Element::new(Some((2., setup.rc.clone())), 3.);
         let element2 = Element::new(None, 4.);
         let mul = Element::new(Some((8., setup.rc.clone())), 12.);
         assert_eq!(element1 * element2, mul);
 
+        // (3) * (4) = 12
         let element1 = Element::new(None, 3.);
         let element2 = Element::new(None, 4.);
         let mul = Element::new(None, 12.);
         assert_eq!(element1 * element2, mul);
+    }
+
+    #[test]
+    fn test_div_elements() {
+        let setup = Setup::new();
+
+        // (x + 3) / (2x + 4) => error
+        let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
+        let element2 = Element::new(Some((2., setup.rc.clone())), 4.);
+        assert_eq!((element1 / element2).error, Err("Cannot divide by x".to_string()));
+
+        // (x + 3) / (4) = x/4 + 3/4
+        let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
+        let element2 = Element::new(None, 4.);
+        let div = Element::new(Some((0.25, setup.rc.clone())), 0.75);
+        assert_eq!(element1 / element2, div);
+
+        // (x + 3) / (0) => error
+        let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
+        let element2 = Element::new(None, 0.);
+        assert_eq!((element1 / element2).error, Err("Division by zero".to_string()));
+
+        // (3) / (4) = x/4 + 3/4
+        let element1 = Element::new(None, 3.);
+        let element2 = Element::new(None, 4.);
+        let div = Element::new(None, 0.75);
+        assert_eq!(element1 / element2, div);
     }
 
     #[test]
