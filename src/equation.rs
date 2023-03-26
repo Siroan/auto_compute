@@ -1,3 +1,6 @@
+extern crate proc_macro;
+use proc_macro::TokenStream;
+
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -32,18 +35,7 @@ impl Equation {
     }
 }
 
-#[macro_export]
-macro_rules! solve_equation {
-    ({$id:ident: $value:expr,}) => {
-    //( $($id:ident: $value:expr),+ $(,)?) => {
-        {
-            println!("id: {:?}", $id);
-            println!("value: {:?}", $value);
-            /*let mut pod = $crate::equation::Pod::new();
-            $(
-                pod.insert($id, $value);
-            )*
-            pod*/
-        }
-    };
-}
+//#[proc_macro_derive(AnswerFn)]
+//pub fn derive_answer_fn(_item: TokenStream) -> TokenStream {
+//    "fn answer() -> u32 { 42 }".parse().unwrap()
+//}

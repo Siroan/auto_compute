@@ -114,7 +114,7 @@ impl Div for Element {
     type Output = Self;
 
     fn div(self, rhs: Element) -> Self {
-        let ax_result = if (rhs.ax.is_some()) {
+        let ax_result = if rhs.ax.is_some() {
             (rhs.ax, Err("Cannot divide by x".to_string()))
         } else {
             self.ax / rhs.b
