@@ -16,11 +16,11 @@ fn main() {
 
     println!("Quantity: {:?}", x);*/
 
-    let result = solve_equation! {{
+    /*let result = solve_equation! {{
         nominal: equation::PodElement::Known(1000.),
         //price: equation::PodElement::Known(10.),
         //quantity: equation::PodElement::Unknown,
         //|nominal, price, quantity| nominal == price * quantity,
     }};
-    println!("Result: {:?}", result);
+    println!("Result: {:?}", result);*/
 }

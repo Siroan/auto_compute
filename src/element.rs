@@ -9,6 +9,7 @@ use crate::unknown::Unknown;
 pub(crate) struct Element {
     ax: Unknown,
     b: f64,
+    error: Result<(), String>,
 }
 
 impl Element {
@@ -16,6 +17,7 @@ impl Element {
         Self {
             ax: Unknown::new(Some((1., rc))),
             b: 0.,
+            error: Ok(()),
         }
     }
 
@@ -23,6 +25,7 @@ impl Element {
         Self {
             ax: Unknown::new(None),
             b: known,
+            error: Ok(()),
         }
     }
 }
@@ -34,6 +37,7 @@ impl Add for Element {
         Self {
             ax: self.ax + other.ax,
             b: self.b + other.b,
+            error: self.error.and(other.error),
         }
     }
 }
@@ -45,6 +49,7 @@ impl Neg for Element {
         Self {
             ax: -self.ax,
             b: -self.b,
+            error: self.error,
         }
     }
 }
@@ -56,6 +61,7 @@ impl Sub for Element {
         Self {
             ax: self.ax - other.ax,
             b: self.b - other.b,
+            error: self.error.and(other.error),
         }
     }
 }
@@ -64,9 +70,12 @@ impl Mul for Element {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self {
-        if self.ax.is_some() && rhs.ax.is_some() {
-            panic!("No square!");
-        }
+        let error = if self.ax.is_some() && rhs.ax.is_some() {
+            Err("Square detected".to_string())
+        } else {
+            Ok(())
+        };
+
         Self {
             ax: if self.ax.is_some() {
                 self.ax * rhs.b
@@ -76,6 +85,7 @@ impl Mul for Element {
                 Unknown::new(None)
             },
             b: self.b * rhs.b,
+            error,
         }
     }
 }
@@ -87,6 +97,7 @@ impl Mul<f64> for Element {
         Self {
             ax: self.ax * rhs,
             b: self.b * rhs,
+            error: self.error,
         }
     }
 }
@@ -117,6 +128,7 @@ mod tests {
             Self {
                 ax: Unknown::new(ax),
                 b: b,
+                error: Ok(()),
             }
         }
     }
