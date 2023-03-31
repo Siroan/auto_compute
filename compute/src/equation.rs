@@ -1,3 +1,14 @@
+
+pub trait EquationAutoCompute {
+    fn auto_compute(&self) -> bool;
+}
+
+#[derive(Debug, PartialEq)]
+pub enum EquationElement {
+    Known(f64),
+    Unknown,
+}
+
 /*use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;

@@ -6,6 +6,8 @@ extern crate compute_macro;
 
 #[cfg(test)]
 mod tests {
+    use compute::equation::{EquationAutoCompute, EquationElement};
+
     use super::*;
 
     use std::cell::RefCell;
@@ -40,5 +42,27 @@ mod tests {
     #[test]
     fn it_works() {
         assert_eq!(Pancakes::formulate(), "Hello, Macro! My name is Pancakes");
+    }
+
+    #[derive(Equation)]
+    struct MyEquation {
+        element1: f64,
+        #[unknown]
+        element2: EquationElement,
+    }
+
+    impl EquationAutoCompute for MyEquation {
+        fn auto_compute(&self) -> bool {
+            true
+        }
+    }
+
+    #[test]
+    fn equation_test() {
+        let my_equation = MyEquation {
+            element1: 0.,
+            element2: EquationElement::Unknown,
+        };
+        assert_eq!(my_equation.compute(), Ok(0.));
     }
 }
