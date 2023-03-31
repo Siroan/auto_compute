@@ -38,7 +38,7 @@ mod tests {
 
     #[derive(Equation)]
     struct MyEquation {
-        _element1: f64,
+        element1: f64,
         #[unknown]
         element2: EquationElement,
         #[unknown]
@@ -47,14 +47,14 @@ mod tests {
 
     impl EquationAutoCompute for MyEquation {
         fn auto_compute(&self) -> bool {
-            true
+            self.element1 == self.element2 + self.element3
         }
     }
 
     #[test]
     fn equation_no_unknown_test() {
         let my_equation = MyEquation {
-            _element1: 0.,
+            element1: 0.,
             element2: EquationElement::Known(0.),
             element3: EquationElement::Known(0.),
         };
@@ -64,9 +64,9 @@ mod tests {
     #[test]
     fn equation_two_unknown_test() {
         let my_equation = MyEquation {
-            _element1: 0.,
-            element2: EquationElement::Unknown,
-            element3: EquationElement::Unknown,
+            element1: 0.,
+            element2: EquationElement::new_unknown(),
+            element3: EquationElement::new_unknown(),
         };
         assert_eq!(my_equation.compute(), Err(Error::MoreThanOneUnknown));
     }
@@ -74,10 +74,10 @@ mod tests {
     #[test]
     fn equation_test() {
         let my_equation = MyEquation {
-            _element1: 0.,
-            element2: EquationElement::Unknown,
-            element3: EquationElement::Known(0.),
+            element1: 100.,
+            element2: EquationElement::new_unknown(),
+            element3: EquationElement::Known(30.),
         };
-        assert_eq!(my_equation.compute(), Ok(0.));
+        assert_eq!(my_equation.compute(), Ok(70.));
     }
 }

@@ -18,7 +18,7 @@ pub struct Element {
 impl Element {
     pub fn new_unknown(x: Rc<RefCell<f64>>) -> Self {
         Self {
-            ax: Some((1., Unknown::new(x))),
+            ax: Some((1., Unknown::new_with_value(x))),
             b: 0.,
             error: Ok(()),
         }
@@ -74,6 +74,26 @@ impl Add for Element {
     }
 }
 
+impl Add<f64> for Element {
+    type Output = Self;
+
+    fn add(self, rhs: f64) -> Self {
+        Self {
+            ax: self.ax,
+            b: self.b + rhs,
+            error: self.error,
+        }
+    }
+}
+
+impl Add<Element> for f64 {
+    type Output = Element;
+
+    fn add(self, rhs: Element) -> Self::Output {
+        rhs + self
+    }
+}
+
 impl Neg for Element {
     type Output = Self;
 
@@ -105,6 +125,26 @@ impl Sub for Element {
             b: self.b - rhs.b,
             error,
         }
+    }
+}
+
+impl Sub<f64> for Element {
+    type Output = Self;
+
+    fn sub(self, rhs: f64) -> Self {
+        Self {
+            ax: self.ax,
+            b: self.b - rhs,
+            error: self.error,
+        }
+    }
+}
+
+impl Sub<Element> for f64 {
+    type Output = Element;
+
+    fn sub(self, rhs: Element) -> Self::Output {
+        -rhs + self
     }
 }
 
@@ -249,7 +289,7 @@ mod tests {
     impl Element {
         fn new(ax: Option<(f64, Rc<RefCell<f64>>)>, b: f64) -> Self {
             Self {
-                ax: ax.map(|ax| (ax.0, Unknown::new(ax.1))),
+                ax: ax.map(|ax| (ax.0, Unknown::new_with_value(ax.1))),
                 b,
                 error: Ok(()),
             }
@@ -299,6 +339,16 @@ mod tests {
         let element2 = Element::new(None, 4.);
         let sum = Element::new(None, 7.);
         assert_eq!(element1 + element2, sum);
+
+        // (x + 3) + 4 = 3x + 7
+        let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
+        let sum = Element::new(Some((1., setup.rc.clone())), 7.);
+        assert_eq!(element1 + 4., sum);
+
+        // 4 + (x + 3) = 3x + 7
+        let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
+        let sum = Element::new(Some((1., setup.rc.clone())), 7.);
+        assert_eq!(4. + element1, sum);
     }
 
     #[test]
@@ -343,6 +393,16 @@ mod tests {
         let element2 = Element::new(None, 4.);
         let sub = Element::new(None, -1.);
         assert_eq!(element1 - element2, sub);
+
+        // (x + 3) - 4 = x -1
+        let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
+        let sub = Element::new(Some((1., setup.rc.clone())), -1.);
+        assert_eq!(element1 - 4., sub);
+
+        // 4 - (x + 3) = x -1
+        let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
+        let sub = Element::new(Some((-1., setup.rc.clone())), 1.);
+        assert_eq!(4. - element1, sub);
     }
 
     #[test]

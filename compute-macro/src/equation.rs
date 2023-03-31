@@ -38,11 +38,14 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
             #find_unknown
             println!("{:?}", #name_s);
             println!("{:?}", self.#name);
-            if self.#name == EquationElement::Unknown {
-                if unknown.is_some() {
-                    return Err(Error::MoreThanOneUnknown);
-                }
-                unknown = Some(self.#name.clone());
+            match self.#name {
+                EquationElement::Unknown(_) => {
+                    if unknown.is_some() {
+                        return Err(Error::MoreThanOneUnknown);
+                    }
+                    unknown = Some(self.#name.clone());
+                },
+                _ => {},
             }
         }
     }

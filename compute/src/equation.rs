@@ -1,3 +1,5 @@
+use crate::unknown::Unknown;
+
 pub trait EquationAutoCompute {
     fn auto_compute(&self) -> bool;
 }
@@ -5,39 +7,11 @@ pub trait EquationAutoCompute {
 #[derive(Clone, Debug, PartialEq)]
 pub enum EquationElement {
     Known(f64),
-    Unknown,
+    Unknown(Unknown),
 }
 
-/*use std::cell::RefCell;
-use std::collections::HashMap;
-use std::rc::Rc;
-
-#[derive(Debug)]
-pub enum PodElement {
-    Known(f64),
-    Unknown,
-    //UnknownWithF-1
-}
-
-pub type Pod = HashMap<String, PodElement>;
-
-struct Equation {
-    x: Rc<RefCell<f64>>,
-    pod: Pod,
-    compute: Box<dyn Fn() -> bool>,
-}
-
-impl Equation {
-    fn new(pod: Pod, compute: Box<dyn Fn() -> bool>) -> Self {
-        Self {
-            x: Rc::new(RefCell::new(0.)),
-            pod,
-            compute,
-        }
+impl EquationElement {
+    pub fn new_unknown() -> EquationElement {
+        EquationElement::Unknown(Unknown::new())
     }
-
-    fn compute(&self) -> f64 {
-        self.compute();
-        *self.x.borrow()
-    }
-}*/
+}
