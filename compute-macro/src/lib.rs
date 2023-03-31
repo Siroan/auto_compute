@@ -11,23 +11,6 @@ mod equation;
 mod field;
 mod symbols;
 
-#[proc_macro_derive(Formulate)]
-pub fn formulate_derive(input: TokenStream) -> TokenStream {
-    impl_formulate(&syn::parse(input).unwrap())
-}
-
-fn impl_formulate(ast: &syn::DeriveInput) -> TokenStream {
-    let name = &ast.ident;
-    let gen = quote! {
-        impl #name {
-            fn formulate() -> String {
-                format!("Hello, Macro! My name is {}", stringify!(#name))
-            }
-        }
-    };
-    gen.into()
-}
-
 #[proc_macro_derive(Equation, attributes(unknown))]
 pub fn derive_equation(input: TokenStream) -> TokenStream {
     let mut input = parse_macro_input!(input as DeriveInput);

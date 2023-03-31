@@ -36,14 +36,6 @@ mod tests {
         assert_eq!(element1 + element2, sum);
     }
 
-    #[derive(Formulate)]
-    struct Pancakes;
-
-    #[test]
-    fn it_works() {
-        assert_eq!(Pancakes::formulate(), "Hello, Macro! My name is Pancakes");
-    }
-
     #[derive(Equation)]
     struct MyEquation {
         _element1: f64,
