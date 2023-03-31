@@ -5,8 +5,8 @@ use crate::error::Error;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Unknown {
-    pub(crate) status: Result<(), Error>,
-    pub(crate) unknown: Rc<RefCell<f64>>,
+    pub status: Result<(), Error>,
+    pub unknown: Rc<RefCell<f64>>,
 }
 
 impl Unknown {

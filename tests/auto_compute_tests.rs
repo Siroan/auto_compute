@@ -34,6 +34,12 @@ mod tests {
         let element2 = 2. * Element::new_unknown(setup.rc.clone()) + Element::new_known(4.);
         let sum = 3. * Element::new_unknown(setup.rc.clone()) + Element::new_known(7.);
         assert_eq!(element1 + element2, sum);
+
+
+        let element2 = 2. * Element::new_unknown(setup.rc.clone()) + Element::new_known(4.);
+        let sum = 3. * Element::new_unknown(setup.rc.clone()) + Element::new_known(7.);
+        let _ = element2 == sum;
+        assert_eq!(*setup.rc.borrow(), -3.);
     }
 
     #[derive(Equation)]
@@ -47,7 +53,7 @@ mod tests {
 
     impl EquationAutoCompute for MyEquation {
         fn auto_compute(&self) -> bool {
-            self.element1 == self.element2 + self.element3
+            self.element1 == self.element2.clone() + self.element3.clone()
         }
     }
 

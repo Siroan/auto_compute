@@ -282,6 +282,18 @@ impl PartialEq for Element {
     }
 }
 
+impl PartialEq<f64> for Element {
+    fn eq(&self, rhs: &f64) -> bool {
+        self == &Element::new_known(*rhs)
+    }
+}
+
+impl PartialEq<Element> for f64 {
+    fn eq(&self, rhs: &Element) -> bool {
+        &Element::new_known(*self) == rhs
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

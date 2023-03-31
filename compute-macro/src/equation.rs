@@ -65,7 +65,13 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
                 }
 
                 self.auto_compute();
-                Ok(0.)
+
+                match unknown {
+                    Some(EquationElement::Unknown(unknown)) => {
+                        unknown.status.and(Ok(*unknown.unknown.borrow()))
+                    },
+                    _ => { Ok(0.) },
+                }
             }
         }
     }
