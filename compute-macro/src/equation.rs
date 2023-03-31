@@ -11,27 +11,26 @@ pub fn expand_derive_equation(
     let mut l = vec![];
     if let Data::Struct(data) = input.clone().data {
         if let Fields::Named(fields) = data.fields {
-            fields.named.iter().enumerate().map(|(i, field)|
-            for attr in &field.attrs {
-                if attr.path() != UNKNOWN {
-                    continue;
-                }
+            fields.named.iter().for_each(|field|
+                for attr in &field.attrs {
+                    if attr.path() == UNKNOWN {
+                        //TODO: add check on type
 
-                //TODO: add check on type
-
-                if let Some(ident) = field.clone().ident {
-                    l.push(Field {
-                        name: ident,
-                    });
+                        if let Some(ident) = field.clone().ident {
+                            l.push(Field {
+                                name: ident,
+                            });
+                        }
+                    } else {
+                        break;
+                    }
                 }
-            }
-        )
-            .collect()
+        );
         } else {
-            //error
+            //TODO: compilation error
         }
     } else {
-        //error
+        //TODO: compilation error
     }
 
     let mut find_unknown = quote! {};
