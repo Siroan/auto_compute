@@ -1,5 +1,5 @@
-use std::ops::{Add, Div, Mul, Neg, Sub};
 use std::cell::RefCell;
+use std::ops::{Add, Div, Mul, Neg, Sub};
 use std::rc::Rc;
 
 use crate::error::Error;
@@ -8,14 +8,20 @@ use crate::error::Error;
 #[derive(Clone, Debug, PartialEq)]
 pub struct Unknown {
     factor: Option<f64>,
-    unknown:  Option<Rc<RefCell<f64>>>,
+    unknown: Option<Rc<RefCell<f64>>>,
 }
 
 impl Unknown {
     pub(crate) fn new(content: Option<(f64, Rc<RefCell<f64>>)>) -> Self {
         content.map_or_else(
-            || Unknown { factor: None, unknown: None },
-            |content| Unknown { factor: Some(content.0), unknown: Some(content.1) },
+            || Unknown {
+                factor: None,
+                unknown: None,
+            },
+            |content| Unknown {
+                factor: Some(content.0),
+                unknown: Some(content.1),
+            },
         )
     }
 
@@ -27,7 +33,10 @@ impl Unknown {
         let mut temp = self.clone() - other;
 
         if let Some(x) = &mut temp.unknown {
-            let a = temp.factor.map(|a| if a == 0. { 1. } else { a }).unwrap_or(1.);
+            let a = temp
+                .factor
+                .map(|a| if a == 0. { 1. } else { a })
+                .unwrap_or(1.);
             *x.borrow_mut() = -b / a;
         }
     }
@@ -107,10 +116,13 @@ impl Div<f64> for Unknown {
         if rhs == 0. {
             (self, Err(Error::DivisionByZero))
         } else {
-            (Self {
-                factor: self.factor.map(|factor| factor / rhs),
-                unknown: self.unknown,
-            }, Ok(()))
+            (
+                Self {
+                    factor: self.factor.map(|factor| factor / rhs),
+                    unknown: self.unknown,
+                },
+                Ok(()),
+            )
         }
     }
 }
@@ -242,18 +254,18 @@ mod tests {
         let unknown = Unknown::new(None);
         let factor = 3.;
         let div = Unknown::new(None);
-        assert_eq!(unknown / factor , (div, Ok(())));
+        assert_eq!(unknown / factor, (div, Ok(())));
 
         // (4x) / (0) => error
         let unknown = Unknown::new(Some((4., setup.rc.clone())));
         let factor = 0.;
         let div = Unknown::new(Some((4., setup.rc.clone())));
-        assert_eq!(unknown / factor , (div, Err(Error::DivisionByZero)));
+        assert_eq!(unknown / factor, (div, Err(Error::DivisionByZero)));
 
         // () / (0) => error
         let unknown = Unknown::new(None);
         let factor = 0.;
         let div = Unknown::new(None);
-        assert_eq!(unknown / factor , (div, Err(Error::DivisionByZero)));
+        assert_eq!(unknown / factor, (div, Err(Error::DivisionByZero)));
     }
 }

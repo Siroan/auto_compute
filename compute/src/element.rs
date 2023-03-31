@@ -1,9 +1,9 @@
-use std::ops::{Add, Div, Mul, Neg, Sub};
 use std::cell::RefCell;
+use std::ops::{Add, Div, Mul, Neg, Sub};
 use std::rc::Rc;
 
-use crate::unknown::Unknown;
 use crate::error::Error;
+use crate::unknown::Unknown;
 
 // Represents an element like 'a * x + b'
 #[derive(Debug)]
@@ -123,7 +123,11 @@ impl Div for Element {
 
         Self {
             ax: ax_result.0,
-            b: if ax_result.1.is_ok() { self.b / rhs.b } else { self.b },
+            b: if ax_result.1.is_ok() {
+                self.b / rhs.b
+            } else {
+                self.b
+            },
             error: self.error.and(ax_result.1),
         }
     }
@@ -276,7 +280,10 @@ mod tests {
         // (x + 3) / (2x + 4) => error
         let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
         let element2 = Element::new(Some((2., setup.rc.clone())), 4.);
-        assert_eq!((element1 / element2).error, Err(Error::UnknownInDenominator));
+        assert_eq!(
+            (element1 / element2).error,
+            Err(Error::UnknownInDenominator)
+        );
 
         // (x + 3) / (4) = x/4 + 3/4
         let element1 = Element::new(Some((1., setup.rc.clone())), 3.);

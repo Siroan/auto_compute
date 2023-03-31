@@ -1,4 +1,3 @@
-
 pub trait EquationAutoCompute {
     fn auto_compute(&self) -> bool;
 }

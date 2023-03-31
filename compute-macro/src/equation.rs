@@ -1,31 +1,28 @@
 use proc_macro::TokenStream;
 use syn::{Data, Fields};
 
-use crate::symbols::UNKNOWN;
 use crate::field::Field;
+use crate::symbols::UNKNOWN;
 
-pub fn expand_derive_equation(
-    input: &mut syn::DeriveInput,
-) -> TokenStream {//Result<TokenStream, Vec<syn::Error>> {
+pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
+    //Result<TokenStream, Vec<syn::Error>> {
     let ident = &input.ident;
     let mut l = vec![];
     if let Data::Struct(data) = input.clone().data {
         if let Fields::Named(fields) = data.fields {
-            fields.named.iter().for_each(|field|
+            fields.named.iter().for_each(|field| {
                 for attr in &field.attrs {
                     if attr.path() == UNKNOWN {
                         //TODO: add check on type
 
                         if let Some(ident) = field.clone().ident {
-                            l.push(Field {
-                                name: ident,
-                            });
+                            l.push(Field { name: ident });
                         }
                     } else {
                         break;
                     }
                 }
-        );
+            });
         } else {
             //TODO: compilation error
         }
@@ -68,5 +65,6 @@ pub fn expand_derive_equation(
                 Ok(0.)
             }
         }
-    }.into()
+    }
+    .into()
 }

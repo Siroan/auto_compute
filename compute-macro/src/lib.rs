@@ -8,8 +8,8 @@ use proc_macro::TokenStream;
 use syn::{parse_macro_input, DeriveInput};
 
 mod equation;
-mod symbols;
 mod field;
+mod symbols;
 
 #[proc_macro_derive(Formulate)]
 pub fn formulate_derive(input: TokenStream) -> TokenStream {
