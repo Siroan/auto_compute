@@ -381,7 +381,7 @@ mod tests {
         let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
         let element2 = Element::new(Some((2., setup.rc.clone())), 4.);
         assert_eq!(
-            (element1 / element2).error,
+            (element1 / element2).ax.unwrap().1.status,
             Err(Error::UnknownInDenominator)
         );
 
@@ -394,7 +394,7 @@ mod tests {
         // (x + 3) / (0) => error
         let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
         let element2 = Element::new(None, 0.);
-        assert_eq!((element1 / element2).error, Err(Error::DivisionByZero));
+        assert_eq!((element1 / element2).ax.unwrap().1.status, Err(Error::DivisionByZero));
 
         // (3) / (4) = x/4 + 3/4
         let element1 = Element::new(None, 3.);
