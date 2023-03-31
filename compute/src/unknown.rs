@@ -2,6 +2,8 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::error::Error;
+
 // Represents an element like 'a * x'
 #[derive(Clone, Debug, PartialEq)]
 pub struct Unknown {
@@ -99,11 +101,11 @@ impl Mul<Unknown> for f64 {
 }
 
 impl Div<f64> for Unknown {
-    type Output = (Self, Result<(), String>);
+    type Output = (Self, Result<(), Error>);
 
     fn div(self, rhs: f64) -> Self::Output {
         if rhs == 0. {
-            (self, Err("Division by zero".to_string()))
+            (self, Err(Error::DivisionByZero))
         } else {
             (Self {
                 factor: self.factor.map(|factor| factor / rhs),
@@ -246,12 +248,12 @@ mod tests {
         let unknown = Unknown::new(Some((4., setup.rc.clone())));
         let factor = 0.;
         let div = Unknown::new(Some((4., setup.rc.clone())));
-        assert_eq!(unknown / factor , (div, Err("Division by zero".to_string())));
+        assert_eq!(unknown / factor , (div, Err(Error::DivisionByZero)));
 
         // () / (0) => error
         let unknown = Unknown::new(None);
         let factor = 0.;
         let div = Unknown::new(None);
-        assert_eq!(unknown / factor , (div, Err("Division by zero".to_string())));
+        assert_eq!(unknown / factor , (div, Err(Error::DivisionByZero)));
     }
 }

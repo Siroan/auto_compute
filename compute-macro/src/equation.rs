@@ -34,29 +34,36 @@ pub fn expand_derive_equation(
         //error
     }
 
-    let mut check_unknowns = quote! {};
+    let mut find_unknown = quote! {};
     for l in l {
         let name = l.name;
         let name_s = name.to_string();
-        check_unknowns = quote! {
-            #check_unknowns
+        find_unknown = quote! {
+            #find_unknown
             println!("{:?}", #name_s);
             println!("{:?}", self.#name);
             if self.#name == EquationElement::Unknown {
-                number_of_unknown += 1;
+                if unknown.is_some() {
+                    return Err(Error::MoreThanOneUnknown);
+                }
+                unknown = Some(self.#name.clone());
             }
         }
     }
 
     quote! {
+        use compute::error::Error;
+
         #[automatically_derived]
         impl #ident {
-            fn compute(&self) -> Result<f64, String> {
+            fn compute(&self) -> Result<f64, Error> {
                 use compute::equation::EquationElement;
 
-                let mut number_of_unknown: u8 = 0;
-                #check_unknowns
-                println!("Number of unknowns: {:?}", number_of_unknown);
+                let mut unknown = None;
+                #find_unknown
+                if unknown.is_none() {
+                    return Err(Error::NoUnkown);
+                }
 
                 self.auto_compute();
                 Ok(0.)

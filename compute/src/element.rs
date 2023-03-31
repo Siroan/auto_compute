@@ -3,13 +3,14 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::unknown::Unknown;
+use crate::error::Error;
 
 // Represents an element like 'a * x + b'
 #[derive(Debug)]
 pub struct Element {
     ax: Unknown,
     b: f64,
-    error: Result<(), String>,
+    error: Result<(), Error>,
 }
 
 impl Element {
@@ -71,7 +72,7 @@ impl Mul for Element {
 
     fn mul(self, rhs: Self) -> Self {
         let error = if self.ax.is_some() && rhs.ax.is_some() {
-            Err("Square detected".to_string())
+            Err(Error::SquareForbidden)
         } else {
             Ok(())
         };
@@ -115,7 +116,7 @@ impl Div for Element {
 
     fn div(self, rhs: Element) -> Self {
         let ax_result = if rhs.ax.is_some() {
-            (rhs.ax, Err("Cannot divide by x".to_string()))
+            (rhs.ax, Err(Error::UnknownInDenominator))
         } else {
             self.ax / rhs.b
         };
@@ -247,7 +248,7 @@ mod tests {
         // (x + 3) * (2x + 4) => error
         let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
         let element2 = Element::new(Some((2., setup.rc.clone())), 4.);
-        assert_eq!((element1 * element2).error, Err("Square detected".to_string()));
+        assert_eq!((element1 * element2).error, Err(Error::SquareForbidden));
 
         // (3) * (2x + 4) = 6x + 12
         let element1 = Element::new(None, 3.);
@@ -275,7 +276,7 @@ mod tests {
         // (x + 3) / (2x + 4) => error
         let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
         let element2 = Element::new(Some((2., setup.rc.clone())), 4.);
-        assert_eq!((element1 / element2).error, Err("Cannot divide by x".to_string()));
+        assert_eq!((element1 / element2).error, Err(Error::UnknownInDenominator));
 
         // (x + 3) / (4) = x/4 + 3/4
         let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
@@ -286,7 +287,7 @@ mod tests {
         // (x + 3) / (0) => error
         let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
         let element2 = Element::new(None, 0.);
-        assert_eq!((element1 / element2).error, Err("Division by zero".to_string()));
+        assert_eq!((element1 / element2).error, Err(Error::DivisionByZero));
 
         // (3) / (4) = x/4 + 3/4
         let element1 = Element::new(None, 3.);

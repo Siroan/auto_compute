@@ -3,7 +3,7 @@ pub trait EquationAutoCompute {
     fn auto_compute(&self) -> bool;
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum EquationElement {
     Known(f64),
     Unknown,
