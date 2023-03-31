@@ -5,18 +5,20 @@ use std::rc::Rc;
 use crate::error::Error;
 use crate::unknown::Unknown;
 
+type Ax = (f64, Unknown);
+
 // Represents an element like 'a * x + b'
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Element {
-    ax: Unknown,
+    ax: Option<(f64, Unknown)>,
     b: f64,
     error: Result<(), Error>,
 }
 
 impl Element {
-    pub fn new_unknown(rc: Rc<RefCell<f64>>) -> Self {
+    pub fn new_unknown(x: Rc<RefCell<f64>>) -> Self {
         Self {
-            ax: Unknown::new(Some((1., rc))),
+            ax: Some((1., Unknown::new(x))),
             b: 0.,
             error: Ok(()),
         }
@@ -24,21 +26,50 @@ impl Element {
 
     pub fn new_known(known: f64) -> Self {
         Self {
-            ax: Unknown::new(None),
+            ax: None,
             b: known,
             error: Ok(()),
         }
     }
 }
 
+fn combine<F>(first: Option<Ax>, second: Option<Ax>, combinator: F) -> Option<Ax>
+    where F: Fn(f64, f64) -> Result<f64, Error> {
+        match (first, second) {
+            (Some(first), Some(second)) => {
+                let mut x = Unknown {
+                    status: first.1.status.and_then(|_| second.1.status),
+                    unknown: first.1.unknown,
+                };
+
+                if x.status.is_ok() {
+                    let combined = combinator(first.0, second.0);
+                    x.status = x.status.and(combined.clone().map(|_| ()));
+
+                    Some((combined.unwrap_or(first.0), x))
+                } else {
+                    Some((first.0, x))
+                }
+            },
+            (Some(first), None) => Some(first),
+            (None, Some(second)) => Some(second),
+            (None, None) => None,
+        }
+}
+
 impl Add for Element {
     type Output = Self;
 
-    fn add(self, other: Self) -> Self {
+    fn add(self, rhs: Self) -> Self {
+        let error = self.error.and(rhs.error);
+
+        let mut ax = combine(self.ax, rhs.ax, |ax1, ax2| Ok(ax1 + ax2));
+        ax.as_mut().map(|ax| ax.1.status.clone().and(error.clone()));
+
         Self {
-            ax: self.ax + other.ax,
-            b: self.b + other.b,
-            error: self.error.and(other.error),
+            ax,
+            b: self.b + rhs.b,
+            error,
         }
     }
 }
@@ -48,7 +79,7 @@ impl Neg for Element {
 
     fn neg(self) -> Self {
         Self {
-            ax: -self.ax,
+            ax: self.ax.map(|ax| (-ax.0, ax.1)),
             b: -self.b,
             error: self.error,
         }
@@ -58,11 +89,21 @@ impl Neg for Element {
 impl Sub for Element {
     type Output = Self;
 
-    fn sub(self, other: Self) -> Self {
+    fn sub(self, rhs: Self) -> Self {
+        let error = self.error.and(rhs.error);
+
+        let mut ax = combine(self.ax.clone(), rhs.ax, |ax1, ax2| Ok(ax1 - ax2));
+        ax.as_mut().map(|ax| ax.1.status.clone().and(error.clone()));
+        if self.ax.is_none() {
+            if let Some(ax) = ax.as_mut() {
+                ax.0 = -ax.0;
+            }
+        }
+
         Self {
-            ax: self.ax - other.ax,
-            b: self.b - other.b,
-            error: self.error.and(other.error),
+            ax,
+            b: self.b - rhs.b,
+            error,
         }
     }
 }
@@ -71,20 +112,16 @@ impl Mul for Element {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self {
-        let error = if self.ax.is_some() && rhs.ax.is_some() {
-            Err(Error::SquareForbidden)
-        } else {
-            Ok(())
-        };
+        let error = self.error.and(rhs.error);
+
+        let mut ax = combine(self.ax.clone(), rhs.ax, |_, _| Err(Error::SquareForbidden));
+        if let Some(ax) = ax.as_mut() {
+            ax.0 *= if self.ax.is_some() { rhs.b } else { self.b };
+            ax.1.status = ax.1.status.clone().and(error.clone());
+        }
 
         Self {
-            ax: if self.ax.is_some() {
-                self.ax * rhs.b
-            } else if rhs.ax.is_some() {
-                self.b * rhs.ax
-            } else {
-                Unknown::new(None)
-            },
+            ax,
             b: self.b * rhs.b,
             error,
         }
@@ -96,7 +133,7 @@ impl Mul<f64> for Element {
 
     fn mul(self, rhs: f64) -> Self {
         Self {
-            ax: self.ax * rhs,
+            ax: self.ax.map(|ax| (ax.0 * rhs, ax.1)),
             b: self.b * rhs,
             error: self.error,
         }
@@ -111,34 +148,97 @@ impl Mul<Element> for f64 {
     }
 }
 
+fn combine_div(first: Option<Ax>, second: Option<Ax>) -> Option<Ax> {
+    match (first, second) {
+        (Some(first), Some(second)) => {
+            let x = Unknown {
+                status: first.1.status.and(second.1.status).and(Err(Error::UnknownInDenominator)),
+                unknown: first.1.unknown,
+            };
+
+            Some((second.0, x))
+        },
+        (Some(first), None) => Some(first),
+        (None, Some(second)) => {
+            let x = Unknown {
+                status: second.1.status.and(Err(Error::UnknownInDenominator)),
+                unknown: second.1.unknown,
+            };
+
+            Some((second.0, x))
+        },
+        (None, None) => None,
+    }
+}
+
 impl Div for Element {
     type Output = Self;
 
     fn div(self, rhs: Element) -> Self {
-        let ax_result = if rhs.ax.is_some() {
-            (rhs.ax, Err(Error::UnknownInDenominator))
-        } else {
-            self.ax / rhs.b
-        };
+        let error = self.error
+            .and(rhs.error)
+            .and_then(|_| {
+                if rhs.ax.is_some() {
+                    Err(Error::UnknownInDenominator)
+                } else if rhs.b == 0. {
+                    Err(Error::DivisionByZero)
+                } else {
+                    Ok(())
+                }
+            });
+        let mut ax = combine_div(self.ax, rhs.ax);
+        if let Some(ax) = ax.as_mut() {
+            ax.0 /= rhs.b;
+            ax.1.status = ax.1.status.clone().and(error.clone());
+        }
 
         Self {
-            ax: ax_result.0,
-            b: if ax_result.1.is_ok() {
+            ax,
+            b: if error.is_ok() {
                 self.b / rhs.b
             } else {
                 self.b
             },
-            error: self.error.and(ax_result.1),
+            error,
         }
     }
 }
 
-impl PartialEq for Element {
-    fn eq(&self, other: &Self) -> bool {
-        println!("Solve called");
-        self.ax.clone().solve(other.ax.clone(), self.b - other.b);
+impl Div<f64> for Element {
+    type Output = Self;
 
-        self.ax == other.ax && self.b == other.b
+    fn div(self, rhs: f64) -> Self {
+        Self {
+            ax: self.ax.map(|ax| (ax.0 / rhs, ax.1)),
+            b: self.b / rhs,
+            error: self.error,
+        }
+    }
+}
+
+impl Div<Element> for f64 {
+    type Output = Element;
+
+    fn div(self, rhs: Element) -> Self::Output {
+        Element::new_known(self) / rhs
+    }
+}
+
+impl PartialEq for Element {
+    fn eq(&self, rhs: &Self) -> bool {
+        let lhs = self.clone() - rhs.clone();
+        if let Some(ax) = lhs.ax {
+            if ax.0 != 0. && ax.1.status.is_ok() {
+                *ax.1.unknown.borrow_mut() = -lhs.b / ax.0;
+            }
+        }
+
+        let ax_eq = match (self.ax.clone(), rhs.ax.clone()) {
+            (Some(ax1), Some(ax2)) => ax1.0 == ax2.0 && ax1.1.status == ax1.1.status,
+            (None, None) => true,
+            _ => false,
+        };
+        ax_eq && self.b == rhs.b
     }
 }
 
@@ -149,8 +249,8 @@ mod tests {
     impl Element {
         fn new(ax: Option<(f64, Rc<RefCell<f64>>)>, b: f64) -> Self {
             Self {
-                ax: Unknown::new(ax),
-                b: b,
+                ax: ax.map(|ax| (ax.0, Unknown::new(ax.1))),
+                b,
                 error: Ok(()),
             }
         }
@@ -252,7 +352,7 @@ mod tests {
         // (x + 3) * (2x + 4) => error
         let element1 = Element::new(Some((1., setup.rc.clone())), 3.);
         let element2 = Element::new(Some((2., setup.rc.clone())), 4.);
-        assert_eq!((element1 * element2).error, Err(Error::SquareForbidden));
+        assert_eq!((element1 * element2).ax.unwrap().1.status, Err(Error::SquareForbidden));
 
         // (3) * (2x + 4) = 6x + 12
         let element1 = Element::new(None, 3.);
