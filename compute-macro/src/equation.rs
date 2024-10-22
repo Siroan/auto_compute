@@ -2,21 +2,20 @@ use proc_macro::TokenStream;
 use syn::{Data, Fields};
 
 use crate::field::Field;
-use crate::symbols::UNKNOWN;
+use crate::symbols::VARIABLE;
 
 pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
-    //Result<TokenStream, Vec<syn::Error>> {
     let ident = &input.ident;
-    let mut l = vec![];
+    let mut variables = vec![];
     if let Data::Struct(data) = input.clone().data {
         if let Fields::Named(fields) = data.fields {
             fields.named.iter().for_each(|field| {
                 for attr in &field.attrs {
-                    if attr.path() == UNKNOWN {
+                    if attr.path() == VARIABLE {
                         //TODO: add check on type
 
                         if let Some(ident) = field.clone().ident {
-                            l.push(Field { name: ident });
+                            variables.push(Field { name: ident });
                         }
                     } else {
                         break;
@@ -31,17 +30,17 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
     }
 
     let mut find_unknown = quote! {};
-    for l in l {
-        let name = l.name;
-        let name_s = name.to_string();
+    for variable in variables {
+        let name = variable.name;
+        //let name_s = name.to_string(); TODO remove?
         find_unknown = quote! {
             #find_unknown
-            println!("{:?}", #name_s);
+            //println!("{:?}", #name_s);
             println!("{:?}", self.#name);
             match self.#name {
                 EquationElement::Unknown(_) => {
                     if unknown.is_some() {
-                        return Err(Error::MoreThanOneUnknown);
+                        return Err(Error::SeveralUnknown);
                     }
                     unknown = Some(self.#name.clone());
                 },

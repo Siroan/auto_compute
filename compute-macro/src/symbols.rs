@@ -3,8 +3,8 @@ use syn::{Ident, Path};
 
 pub struct Symbol(&'static str);
 
-//pub const EQUATION: Symbol = Symbol("equation");
-pub const UNKNOWN: Symbol = Symbol("unknown");
+//pub const EQUATION: Symbol = Symbol("equation");TODO remove?
+pub const VARIABLE: Symbol = Symbol("variable");
 
 impl PartialEq<Symbol> for Ident {
     fn eq(&self, word: &Symbol) -> bool {

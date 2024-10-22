@@ -45,9 +45,9 @@ mod tests {
     #[derive(Equation)]
     struct MyEquation {
         element1: f64,
-        #[unknown]
+        #[variable]
         element2: EquationElement,
-        #[unknown]
+        #[variable]
         element3: EquationElement,
     }
 
@@ -74,7 +74,7 @@ mod tests {
             element2: EquationElement::new_unknown(),
             element3: EquationElement::new_unknown(),
         };
-        assert_eq!(my_equation.compute(), Err(Error::MoreThanOneUnknown));
+        assert_eq!(my_equation.compute(), Err(Error::SeveralUnknown));
     }
 
     #[test]

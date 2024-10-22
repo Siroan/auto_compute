@@ -1,7 +1,7 @@
 [package]
 name = "auto_compute"
 version = "0.1.0"
-authors = ["Antoine Menciere <antoine.menciere@gmail.com>"]
+authors = ["Antoine Mencière <antoine.menciere@gmail.com>"]
 
 [dependencies]
 compute = { path = "compute" }

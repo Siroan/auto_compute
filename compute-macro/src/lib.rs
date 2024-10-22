@@ -11,7 +11,7 @@ mod equation;
 mod field;
 mod symbols;
 
-#[proc_macro_derive(Equation, attributes(unknown))]
+#[proc_macro_derive(Equation, attributes(variable))]
 pub fn derive_equation(input: TokenStream) -> TokenStream {
     let mut input = parse_macro_input!(input as DeriveInput);
     equation::expand_derive_equation(&mut input)
