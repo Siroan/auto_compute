@@ -1,14 +1,13 @@
 use std::fmt;
 
 pub enum LogStep {
-    Compilation,
-
+    EquationStructure,
 }
 
 impl fmt::Display for LogStep {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            LogStep::Compilation => "Compilation",
+            LogStep::EquationStructure => "EquationStructure",
         };
         write!(f, "[{s}]")
     }
@@ -20,8 +19,9 @@ fn _log(step: LogStep, message: &str) {
 
 pub fn log(step: LogStep, _message: &str) {
     match step {
-        #[cfg(feature = "debug-equation-compilation")]
-        LogStep::Compilation => _log(step, _message),
+        #[cfg(feature = "debug-equation-structure")]
+        LogStep::EquationStructure => _log(step, _message),
+        #[allow(unreachable_patterns)]
         _ => {},
     }
 }

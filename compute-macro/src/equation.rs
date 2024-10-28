@@ -4,6 +4,10 @@ use syn::{Data, Fields};
 use crate::field::Field;
 use crate::symbols::VARIABLE;
 
+fn log(message: String) {
+    logger::log(logger::LogStep::EquationStructure, &message);
+}
+
 pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
     let ident = &input.ident;
     let mut variables = vec![];
@@ -13,8 +17,9 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
                 for attr in &field.attrs {
                     if attr.path() == VARIABLE {
                         //TODO: add check on type
-
+                        
                         if let Some(ident) = field.clone().ident {
+                            log(format!("New variable: {:?}", ident));
                             variables.push(Field { name: ident });
                         }
                     } else {
@@ -36,7 +41,7 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
         find_unknown = quote! {
             #find_unknown
             //println!("{:?}", #name_s);
-            log_compilation(format!("{:?}", self.#name));
+            log(format!("{:?}", self.#name));
             match self.#name {
                 EquationElement::Unknown(_) => {
                     if unknown.is_some() {
@@ -57,8 +62,8 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
             fn compute(&self) -> Result<f64, Error> {
                 use compute::equation::EquationElement;
 
-                fn log_compilation(message: String) {
-                    logger::log(logger::LogStep::Compilation, &message);
+                fn log(message: String) {
+                    logger::log(logger::LogStep::EquationStructure, &message);
                 }
 
                 let mut unknown = None;

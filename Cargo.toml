@@ -12,6 +12,6 @@ logger = { path = "logger" }
 
 [features]
 
-debug-equation-compilation = ["logger/debug-equation-compilation"]
+debug-equation-structure = ["logger/debug-equation-structure"]
 
-debug-all = ["debug-equation-compilation"]
+debug-all = ["debug-equation-structure"]
