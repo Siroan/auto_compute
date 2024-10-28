@@ -1,8 +1,17 @@
 [package]
+
 name = "auto_compute"
 version = "0.1.0"
 authors = ["Antoine Mencière <antoine.menciere@gmail.com>"]
 
 [dependencies]
+
 compute = { path = "compute" }
 compute-macro = { path = "compute-macro" }
+logger = { path = "logger" }
+
+[features]
+
+debug-equation-compilation = ["logger/debug-equation-compilation"]
+
+debug-all = ["debug-equation-compilation"]

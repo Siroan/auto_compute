@@ -36,7 +36,7 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
         find_unknown = quote! {
             #find_unknown
             //println!("{:?}", #name_s);
-            println!("{:?}", self.#name);
+            log_compilation(format!("{:?}", self.#name));
             match self.#name {
                 EquationElement::Unknown(_) => {
                     if unknown.is_some() {
@@ -56,6 +56,10 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
         impl #ident {
             fn compute(&self) -> Result<f64, Error> {
                 use compute::equation::EquationElement;
+
+                fn log_compilation(message: String) {
+                    logger::log(logger::LogStep::Compilation, &message);
+                }
 
                 let mut unknown = None;
                 #find_unknown

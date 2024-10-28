@@ -8,6 +8,8 @@ edition = "2021"
 
 [dependencies]
 compute = { path = "../compute" }
+logger = { path = "../logger" }
+
 syn = "2.0"
 quote = "1.0"
 proc-macro2 = "1.0"

@@ -8,6 +8,7 @@ version = "0.1.0"
 dependencies = [
  "compute",
  "compute-macro",
+ "logger",
 ]
 
 [[package]]
@@ -19,10 +20,15 @@ name = "compute-macro"
 version = "0.1.0"
 dependencies = [
  "compute",
+ "logger",
  "proc-macro2",
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "logger"
+version = "0.1.0"
 
 [[package]]
 name = "proc-macro2"
