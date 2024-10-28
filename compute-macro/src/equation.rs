@@ -4,13 +4,16 @@ use syn::{Data, Fields};
 use crate::field::Field;
 use crate::symbols::VARIABLE;
 
-fn log(message: String) {
-    logger::log(logger::LogStep::EquationStructure, &message);
+fn log_structure(message: String) {
+    logger::log(logger::LogStep::Structure, &message);
 }
 
 pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
-    let ident = &input.ident;
     let mut variables = vec![];
+
+    log_structure(format!("Parsing equation {:?}", input.ident.to_string()));
+
+    let ident = &input.ident;
     if let Data::Struct(data) = input.clone().data {
         if let Fields::Named(fields) = data.fields {
             fields.named.iter().for_each(|field| {
@@ -19,7 +22,7 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
                         //TODO: add check on type
                         
                         if let Some(ident) = field.clone().ident {
-                            log(format!("New variable: {:?}", ident));
+                            log_structure(format!("Found variable: {:?}", ident.to_string()));
                             variables.push(Field { name: ident });
                         }
                     } else {
@@ -28,23 +31,25 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
                 }
             });
         } else {
-            //TODO: compilation error
+            //TODO compilation error would be better
         }
     } else {
-        //TODO: compilation error
+        //TODO compilation error would be better
     }
 
     let mut find_unknown = quote! {};
     for variable in variables {
         let name = variable.name;
-        //let name_s = name.to_string(); TODO remove?
+        let name_s = name.to_string();
         find_unknown = quote! {
             #find_unknown
-            //println!("{:?}", #name_s);
-            log(format!("{:?}", self.#name));
+
+            log_setup(format!("Variable \"{}\" is {:?}", #name_s, self.#name));
+
             match self.#name {
                 EquationElement::Unknown(_) => {
                     if unknown.is_some() {
+                        log_setup(format!("Error: Several unknown"));
                         return Err(Error::SeveralUnknown);
                     }
                     unknown = Some(self.#name.clone());
@@ -61,14 +66,16 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
         impl #ident {
             fn compute(&self) -> Result<f64, Error> {
                 use compute::equation::EquationElement;
+                use compute::error::Error;
 
-                fn log(message: String) {
-                    logger::log(logger::LogStep::EquationStructure, &message);
+                fn log_setup(message: String) {
+                    logger::log(logger::LogStep::Setup, &message);
                 }
 
                 let mut unknown = None;
                 #find_unknown
                 if unknown.is_none() {
+                    log_setup(format!("Error: No unknown"));
                     return Err(Error::NoUnkown);
                 }
 

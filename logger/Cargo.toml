@@ -7,4 +7,6 @@ edition = "2021"
 
 [features]
 
-debug-equation-structure = []
+debug-structure = []
+debug-setup = []
+debug-compute = []
