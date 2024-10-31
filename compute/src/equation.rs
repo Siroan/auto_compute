@@ -1,28 +1,57 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use crate::{unknown::Unknown, element::Element};
+use crate::{element::Element, error::Error, unknown::Unknown};
 
 pub trait EquationAutoCompute {
     fn auto_compute(&self) -> bool;
 }
 
+// TODO I don't like the whole EquationElement -> TODOElement & EquationElement redeclaring all the Element functions
 #[derive(Clone, Debug)]
-pub enum EquationElement {
+pub enum TODOElement {
     Known(f64),
     Unknown(Unknown),
 }
 
+#[derive(Clone, Debug)]
+pub struct EquationElement {
+    todo_element: TODOElement,
+}
+
 impl EquationElement {
-    pub fn new_unknown() -> EquationElement {
-        EquationElement::Unknown(Unknown::new())
+    pub fn known<T>(value: T) -> EquationElement
+    where
+        T: Into<f64>
+    {
+        EquationElement {
+            todo_element: TODOElement::Known(value.into()),
+        }
+    }
+
+    pub fn unknown() -> EquationElement {
+        EquationElement {
+            todo_element: TODOElement::Unknown(Unknown::new()),
+        }
+    }
+
+    pub fn is_unknown(&self) -> bool {
+        matches!(self.todo_element, TODOElement::Unknown(_))
+    }
+
+    pub fn get_unknown_value(&self) -> Result<f64, Error> {
+        if let TODOElement::Unknown(unknown) = &self.todo_element {
+            unknown.clone().status.and(Ok(unknown.unknown.borrow().clone()))
+        } else {
+            panic!("TODO look into this, can it happen?");
+        }
     }
 }
 
 impl From<EquationElement> for Element {
     fn from(e: EquationElement) -> Self {
-        match e {
-            EquationElement::Known(b) => Element::new_known(b),
-            EquationElement::Unknown(x) => Element::new_unknown(x.unknown),
+        match e.todo_element {
+            TODOElement::Known(b) => Element::new_known(b),
+            TODOElement::Unknown(x) => Element::new_unknown(x.unknown),
         }
     }
 }

@@ -61,8 +61,8 @@ mod tests {
     fn equation_no_unknown_test() {
         let my_equation = MyEquation {
             element1: 0.,
-            element2: EquationElement::Known(0.),
-            element3: EquationElement::Known(0.),
+            element2: EquationElement::known(0.),
+            element3: EquationElement::known(0.),
         };
         assert_eq!(my_equation.compute(), Err(Error::NoUnkown));
     }
@@ -71,8 +71,8 @@ mod tests {
     fn equation_two_unknown_test() {
         let my_equation = MyEquation {
             element1: 0.,
-            element2: EquationElement::new_unknown(),
-            element3: EquationElement::new_unknown(),
+            element2: EquationElement::unknown(),
+            element3: EquationElement::unknown(),
         };
         assert_eq!(my_equation.compute(), Err(Error::SeveralUnknown));
     }
@@ -81,8 +81,8 @@ mod tests {
     fn equation_test() {
         let my_equation = MyEquation {
             element1: 100.,
-            element2: EquationElement::new_unknown(),
-            element3: EquationElement::Known(30.),
+            element2: EquationElement::unknown(),
+            element3: EquationElement::known(30.),
         };
         assert_eq!(my_equation.compute(), Ok(70.));
     }

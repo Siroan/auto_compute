@@ -20,8 +20,6 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
             fields.named.iter().for_each(|field| {
                 for attr in &field.attrs {
                     if attr.path() == VARIABLE {
-                        //TODO: add check on type
-                        
                         if let Some(ident) = field.clone().ident {
                             log_structure(format!("Found variable: {:?}", ident.to_string()));
                             variables.push(Field { name: ident });
@@ -53,15 +51,12 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
 
             log_setup(format!("Variable \"{}\" is {:?}", #name_s, self.#name));
 
-            match self.#name {
-                EquationElement::Unknown(_) => {
-                    if unknown.is_some() {
-                        log_setup(format!("Error: Several unknown"));
-                        return Err(Error::SeveralUnknown);
-                    }
-                    unknown = Some(self.#name.clone());
-                },
-                _ => {},
+            if self.#name.is_unknown() {
+                if unknown.is_some() {
+                    log_setup(format!("Error: Several unknown"));
+                    return Err(Error::SeveralUnknown);
+                }
+                unknown = Some(self.#name.clone());
             }
         }
     }
@@ -83,18 +78,16 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
 
                 let mut unknown = None;
                 #find_unknown
-                if unknown.is_none() {
-                    log_setup(format!("Error: No unknown"));
-                    return Err(Error::NoUnkown);
-                }
-
-                self.auto_compute();
 
                 match unknown {
-                    Some(EquationElement::Unknown(unknown)) => {
-                        unknown.status.and(Ok(*unknown.unknown.borrow()))
+                    None => {
+                        log_setup(format!("Error: No unknown"));
+                        Err(Error::NoUnkown)
                     },
-                    _ => { Ok(0.) },
+                    Some(unknown) => {
+                        self.auto_compute();
+                        unknown.get_unknown_value()
+                    }
                 }
             }
         }
