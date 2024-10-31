@@ -3,6 +3,7 @@
 name = "auto_compute"
 version = "0.1.0"
 authors = ["Antoine Mencière <antoine.menciere@gmail.com>"]
+edition = "2021"
 
 [dependencies]
 
@@ -17,3 +18,6 @@ debug-setup = ["logger/debug-setup"]
 debug-compute = ["logger/debug-compute"]
 
 debug-all = ["debug-structure", "debug-setup", "debug-compute"]
+
+[dev-dependencies]
+trybuild = "1.0"

@@ -14,6 +14,7 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
     log_structure(format!("Parsing equation {:?}", input.ident.to_string()));
 
     let ident = &input.ident;
+    let mut struct_diagnostics = quote! {};
     if let Data::Struct(data) = input.clone().data {
         if let Fields::Named(fields) = data.fields {
             fields.named.iter().for_each(|field| {
@@ -31,10 +32,16 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
                 }
             });
         } else {
-            //TODO compilation error would be better
+            struct_diagnostics = quote! {
+                #struct_diagnostics
+                compile_error!("The equation must contain named fields");
+            }
         }
     } else {
-        //TODO compilation error would be better
+        struct_diagnostics = quote! {
+            #struct_diagnostics
+            compile_error!("The equation must be a struct");
+        }
     }
 
     let mut find_unknown = quote! {};
@@ -67,6 +74,8 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
             fn compute(&self) -> Result<f64, Error> {
                 use compute::equation::EquationElement;
                 use compute::error::Error;
+
+                #struct_diagnostics
 
                 fn log_setup(message: String) {
                     logger::log(logger::LogStep::Setup, &message);

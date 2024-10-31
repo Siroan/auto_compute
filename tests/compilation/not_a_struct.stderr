@@ -1,0 +1,18 @@
+error: The equation must be a struct
+ --> tests/compilation/not_a_struct.rs:7:14
+  |
+7 |     #[derive(Equation)]
+  |              ^^^^^^^^
+  |
+  = note: this error originates in the derive macro `Equation` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no method named `auto_compute` found for reference `&EnumNotGood` in the current scope
+ --> tests/compilation/not_a_struct.rs:7:14
+  |
+7 |     #[derive(Equation)]
+  |              ^^^^^^^^
+  |
+  = help: items from traits can only be used if the trait is implemented and in scope
+  = note: the following trait defines an item `auto_compute`, perhaps you need to implement it:
+          candidate #1: `EquationAutoCompute`
+  = note: this error originates in the derive macro `Equation` (in Nightly builds, run with -Z macro-backtrace for more info)
