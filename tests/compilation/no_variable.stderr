@@ -1,5 +1,5 @@
-error: Please use a real struct :-)
- --> tests/compilation/no_named_fields.rs:9:14
+error: There is no variable, you can add the attribute #[variable] to a field to create one
+ --> tests/compilation/no_variable.rs:9:14
   |
 9 |     #[derive(Equation)]
   |              ^^^^^^^^

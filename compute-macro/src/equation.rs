@@ -1,4 +1,4 @@
-use proc_macro::TokenStream;
+use proc_macro2::TokenStream;
 use syn::{Data, Fields};
 
 use crate::field::Field;
@@ -23,6 +23,8 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
                         if let Some(ident) = field.clone().ident {
                             log_structure(format!("Found variable: {:?}", ident.to_string()));
                             variables.push(Field { name: ident });
+
+                            //TODO check type of variables
                         }
                     } else {
                         break;
@@ -32,13 +34,22 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
         } else {
             struct_diagnostics = quote! {
                 #struct_diagnostics
-                compile_error!("The equation must contain named fields");
+                compile_error!("Please use a real struct :-)");
             }
         }
     } else {
         struct_diagnostics = quote! {
             #struct_diagnostics
-            compile_error!("The equation must be a struct");
+            compile_error!("Please use a struct");
+        }
+    }
+
+    //TODO test EquationAutoCompute is implemented?
+
+    if variables.is_empty() && struct_diagnostics.is_empty() {
+        struct_diagnostics = quote! {
+            #struct_diagnostics
+            compile_error!("There is no variable, you can add the attribute #[variable] to a field to create one");
         }
     }
 
@@ -64,7 +75,6 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
     quote! {
         use compute::error::Error;
 
-        #[automatically_derived]
         impl #ident {
             fn compute(&self) -> Result<f64, Error> {
                 use compute::equation::EquationElement;

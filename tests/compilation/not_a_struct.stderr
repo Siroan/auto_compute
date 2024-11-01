@@ -1,4 +1,4 @@
-error: The equation must be a struct
+error: Please use a struct
  --> tests/compilation/not_a_struct.rs:9:14
   |
 9 |     #[derive(Equation)]
