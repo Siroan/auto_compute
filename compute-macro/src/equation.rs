@@ -23,8 +23,6 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
                         if let Some(ident) = field.clone().ident {
                             log_structure(format!("Found variable: {:?}", ident.to_string()));
                             variables.push(Field { name: ident });
-
-                            //TODO check type of variables
                         }
                     } else {
                         break;
@@ -43,8 +41,6 @@ pub fn expand_derive_equation(input: &mut syn::DeriveInput) -> TokenStream {
             compile_error!("Please use a struct");
         }
     }
-
-    //TODO test EquationAutoCompute is implemented?
 
     if variables.is_empty() && struct_diagnostics.is_empty() {
         struct_diagnostics = quote! {
